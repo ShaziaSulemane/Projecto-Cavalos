@@ -1,0 +1,4 @@
+filename,file_size,file_attributes,region_count,region_id,region_shape_attributes,region_attributes
+image_15.png,503170,"{""caption"":"""",""public_domain"":""no"",""image_url"":""""}",1,0,"{""name"":""rect"",""x"":0,""y"":116,""width"":370,""height"":320}","{""name"":""horse"",""type"":""unknown"",""image_quality"":{""good"":true,""frontal"":true,""good_illumination"":true}}"
+image_16.png,512478,"{""caption"":"""",""public_domain"":""no"",""image_url"":""""}",1,0,"{""name"":""rect"",""x"":3,""y"":121,""width"":374,""height"":304}","{""name"":""horse"",""type"":""unknown"",""image_quality"":{""good"":true,""frontal"":true,""good_illumination"":true}}"
+image_17.png,511517,"{""caption"":"""",""public_domain"":""no"",""image_url"":""""}",1,0,"{""name"":""rect"",""x"":3,""y"":128,""width"":376,""height"":296}","{""name"":""horse"",""type"":""unknown"",""image_quality"":{""good"":true,""frontal"":true,""good_illumination"":true}}"
