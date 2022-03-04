@@ -6,12 +6,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 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
-
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 cap = cv2.VideoCapture(
-    '/home/shazia/Documents/HorseID - dataset/Bacatum 06.07.2021/Videos/Lat Direita.mp4')
+    '/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Bacatum 06.07.2021/Videos/Lat Esquerda.mp4')
 background_object = cv2.createBackgroundSubtractorKNN(dist2Threshold=600, detectShadows=True)
 
 kernel = None
@@ -93,30 +91,26 @@ while cap.isOpened():
                 # just down border
                 cy = cy - abs(frame_h - (cy + 500))
 
+            new_coord = [cx - 500, cy - 500, cx + 500,  cy + 500]
             cv2.rectangle(frameCopy, (cx - 500, cy - 500), (cx + 500, cy + 500), (255, 255, 0), 2)
 
             img_save = img_save[(cy - 500):(cy + 500), (cx - 500):(cx + 500)]
             if img_save.size:
-                img_save = cv2.resize(img_save, (512, 512))
+                img_save = cv2.resize(img_save, (500, 500))
                 cv2.imwrite("/home/shazia/Documents/Projecto Cavalos/images/image_" + str(num_img) + ".png", img_save)
 
                 # TODO change original rectangle size to fit in 512 x 512 image
                 # TODO re process new image?
-                new_w = w
-                new_h = h
-                if x < cx - 500: x = 0
-                if y < cy - 500: y = 0
-                # if x + w > 500: new_w = 500
-                # if y + h > 500: new_h = 500
-                f = open("/home/shazia/Documents/Projecto Cavalos/images/image_" + str(num_img) + ".txt", "w+")
-                f.write(str(x) + " " + str(y) + " " + str(new_w) + " " + str(new_h))
-                f.close()
+
+                # f = open("/home/shazia/Documents/Projecto Cavalos/images/image_" + str(num_img) + ".txt", "w+")
+                # f.write(str(x) + " " + str(y) + " " + str(new_w) + " " + str(new_h))
+                # f.close()
 
                 # TODO save file with coordinates in txt or json
-                num_img += 1
-                img_save_new_square = img_save.copy()
-                cv2.rectangle(img_save_new_square, (x, y), (x + new_w, y + new_h), (255, 0, 255), 2)
-                cv2.imshow("Cropped and Resized", img_save_new_square)
+                # num_img += 1
+                # img_save_new_square = img_save.copy()
+                # cv2.rectangle(img_save_new_square, (x, y), (x + new_w, y + new_h), (255, 0, 255), 2)
+                cv2.imshow("Cropped and Resized", img_save)
 
         foreground_part = cv2.bitwise_and(frame, frame, mask=foreground_mask)
         stacked = np.hstack((frame, foreground_part, frameCopy))
