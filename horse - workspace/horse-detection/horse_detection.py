@@ -136,7 +136,7 @@ def opticalFlow(prevFrame, nextFrame, rgb, width, height, xmin, xmax, ymin, ymax
             distance = math.sqrt(pow(flow[0], 2) + pow(flow[1], 2))
             distance = 100.0 * distance / higherDistance
 
-            if distance > flowThreshold and ymin < y < ymax and xmin < x < xmax:
+            if distance > flowThreshold:
                 cv2.arrowedLine(rgb, (x, y), (int(x + flow[0]), int(y + flow[1])), color=(0, 0, 255), thickness=2)
 
 
