@@ -7,13 +7,13 @@ import math
 # frame = cv2.imread('../Images/ss.jpg', cv2.IMREAD_ANYCOLOR)
 
 width = 640
-height = 480
-cap = cv2.VideoCapture('/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Bacatum 06.07.2021/Videos/Lat Esquerda.mp4')
+height = 520
+cap = cv2.VideoCapture('/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Borboleta-620098100705605/Video Lateral/VID_20210625_100523.mp4')
 firstFrame = True
 step = 20  # digital number of optical flow
 flowLength = 5  # digital number
 higherDistance = math.sqrt(pow(width, 2) + pow(height, 2))
-flowThreshold = 1  # percentage
+flowThreshold = 1.2  # percentage
 
 
 def opticalFlow(prevFrame, nextFrame, rgb):
@@ -40,7 +40,7 @@ while True:
     if frame is None:
         break
 
-    frame = cv2.resize(frame, (width, height))
+    frame = cv2.resize(frame, None, fx=0.5, fy=0.5)
 
     if firstFrame:
         imgPrevGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
