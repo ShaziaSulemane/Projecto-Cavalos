@@ -5,6 +5,7 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
 import os
+import numpy as np
 
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -91,15 +92,13 @@ def horse_detection(image, model):
     pred_labels = [labels[i - 1] for i in pred_labels]
     pred_boxes = boxes.numpy()[0].astype('int')
     pred_scores = scores.numpy()[0]
+    new_pred_boxes = []
 
     print_var = False
-    xmin = ymax = xmax = ymin = -1
-
+    i = 0
     for score, (ymin, xmin, ymax, xmax), label in zip(pred_scores, pred_boxes, pred_labels):
         if score < 0.5:
             continue
-        else:
-            print_var = True
 
         if label == 'horse':
             score_txt = f'{100 * round(score)}%'
@@ -108,12 +107,14 @@ def horse_detection(image, model):
             xmax = int(xmax * ratio_w)
             ymin = int(ymin * ratio_h)
 
+            new_pred_boxes.append([ymin, xmin, ymax, xmax])
+
             img_boxes = cv2.rectangle(image, (xmin, ymax), (xmax, ymin), (0, 255, 0), 2)
             font = cv2.FONT_HERSHEY_SIMPLEX
             cv2.putText(img_boxes, label, (xmin, ymax - 10), font, 1.5, (255, 0, 0), 2, cv2.LINE_AA)
             cv2.putText(img_boxes, score_txt, (xmax, ymax - 10), font, 1.5, (255, 0, 0), 2, cv2.LINE_AA)
 
-    return img_boxes, xmin, ymax, xmax, ymin
+    return img_boxes, new_pred_boxes
 
 
 def runAllImages(path):
@@ -130,14 +131,20 @@ def opticalFlow(prevFrame, nextFrame, rgb, width, height, xmin, xmax, ymin, ymax
     higherDistance = math.sqrt(pow(width, 2) + pow(height, 2))
     flows = cv2.calcOpticalFlowFarneback(prevFrame, nextFrame, flow=None, pyr_scale=0.5, poly_sigma=1.5, levels=4,
                                          winsize=20, iterations=2, poly_n=1, flags=0)
+    list_flow = []
     for y in range(0, height, step):
         for x in range(0, width, step):
             flow = flows[y, x] * flowLength
             distance = math.sqrt(pow(flow[0], 2) + pow(flow[1], 2))
             distance = 100.0 * distance / higherDistance
 
-            if distance > flowThreshold:
-                cv2.arrowedLine(rgb, (x, y), (int(x + flow[0]), int(y + flow[1])), color=(0, 0, 255), thickness=2)
+            if distance > flowThreshold and (xmin < x < xmax) and (ymin < y < ymax):
+                list_flow.append([x, y])
+                # cv2.arrowedLine(rgb, (x, y), (int(x + flow[0]), int(y + flow[1])), color=(0, 0, 255), thickness=2)
+            else:
+                rgb[y][x] = np.array([0, 0, 0])
+
+    return list_flow
 
 
 def main():
@@ -146,32 +153,33 @@ def main():
 
     firstFrame = True
     model = loading_model(ROOT_DIR + '/model/')
-    cap = cv2.VideoCapture(
-        '/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Borboleta-620098100705605/Video Lateral/VID_20210625_100523.mp4')
+    cap = cv2.VideoCapture('/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Borboleta-620098100705605/Video Lateral/VID_20210625_100510.mp4')
     while True:
         _, frame = cap.read()
         if frame is None:
             break
 
-        img, xmin, ymax, xmax, ymin = horse_detection(frame, model)
+        flow_img = frame.copy()
+        img, pred_boxes = horse_detection(frame, model)
+        # print("box: " + str(pred_boxes))
 
-        if xmin == -1:
-            continue
+        if len(pred_boxes):
 
-        frame = cv2.resize(frame, None, fx=0.5, fy=0.5)
+            if firstFrame:
+                imgPrevGray = cv2.cvtColor(flow_img, cv2.COLOR_BGR2GRAY)
+                firstFrame = False
+            else:
+                imgNextGray = cv2.cvtColor(flow_img, cv2.COLOR_BGR2GRAY)
 
-        if firstFrame:
-            imgPrevGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            firstFrame = False
-        else:
-            imgNextGray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                for (ymin, xmin, ymax, xmax) in pred_boxes:
+                    list_flow = opticalFlow(imgPrevGray, imgNextGray, flow_img, flow_img.shape[1], flow_img.shape[0], xmin, xmax, ymin, ymax, 1, 5, 1)
+                    # print("Flow: ", str(list_flow))
 
-            opticalFlow(imgPrevGray, imgNextGray, frame, frame.shape[1], frame.shape[0], xmin*0.5, xmax*0.5, ymin*0.5, ymax*0.5, 20, 5, 1)
+                imgPrevGray = imgNextGray.copy()
 
-            imgPrevGray = imgNextGray.copy()
-
-            cv2.imshow('Frame', frame)
-            cv2.waitKey(1)
+        stacked = np.hstack((frame, flow_img))
+        cv2.imshow('Frame', cv2.resize(stacked, None, fx=0.5, fy=0.5))
+        cv2.waitKey(1)
 
 
 if __name__ == "__main__":
