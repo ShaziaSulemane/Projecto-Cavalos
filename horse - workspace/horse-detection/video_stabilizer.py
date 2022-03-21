@@ -49,11 +49,14 @@ h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 # Get frames per second (fps)
 fps = cap.get(cv2.CAP_PROP_FPS)
 
-# Define the codec for output video
-fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+# # Define the codec for output video
+# fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+#
+# # Set up output video
+# out = cv2.VideoWriter('video_out.avi', fourcc, fps, (2 * w, h))
 
-# Set up output video
-out = cv2.VideoWriter('video_out.mp4', fourcc, fps, (2 * w, h))
+fourcc = cv2.VideoWriter_fourcc(*'MPEG')
+out = cv2.VideoWriter('out.avi', fourcc, 9.6, (w, h))
 
 # Read first frame
 _, prev = cap.read()
@@ -158,9 +161,9 @@ for i in range(n_frames - 2):
     if frame_out.shape[1] > 1920:
         frame_out = cv2.resize(frame_out, (int(frame_out.shape[1] / 2), int(frame_out.shape[0] / 2)));
 
-    cv2.imshow("Before and After", frame_out)
+    cv2.imshow("Before and After", frame_stabilized)
     cv2.waitKey(10)
-    out.write(frame_out)
+    out.write(frame_stabilized)
 
 # Release video
 cap.release()

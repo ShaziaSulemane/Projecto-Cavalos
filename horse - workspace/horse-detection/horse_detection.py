@@ -129,8 +129,9 @@ def runAllImages(path):
 
 def opticalFlow(prevFrame, nextFrame, rgb, width, height, xmin, xmax, ymin, ymax, step, flowLength, flowThreshold):
     higherDistance = math.sqrt(pow(width, 2) + pow(height, 2))
-    flows = cv2.calcOpticalFlowFarneback(prevFrame, nextFrame, flow=None, pyr_scale=0.5, poly_sigma=1.5, levels=4,
-                                         winsize=20, iterations=2, poly_n=1, flags=0)
+    # opticalFlowGPU = cv2.cuda_FarnebackOpticalFlow.create(4, 0.5, False, 20, 2, 5, 1.5, 0)
+    # flows = opticalFlowGPU.calc(cv2.cuda_GpuMat(prevFrame), cv2.cuda_GpuMat(nextFrame), None).download()
+    flows = cv2.calcOpticalFlowFarneback(prevFrame, nextFrame, flow=None, pyr_scale=0.5, poly_sigma=1.5, levels=4, winsize=20, iterations=2, poly_n=1, flags=0)
     list_flow = []
     for y in range(0, height, step):
         for x in range(0, width, step):
@@ -151,9 +152,12 @@ def main():
     # The file names follow: E - epochs, LR - learning rate, BS - batches, WH - width and the height of resized
     # images, CL - number of classes (s0 - without any class 0 tag, c0 - with class 0 tags) horse_detection(
 
+    # find color of horse
+    # find other pixels with 'same' color
+
     firstFrame = True
     model = loading_model(ROOT_DIR + '/model/')
-    cap = cv2.VideoCapture('/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Borboleta-620098100705605/Video Lateral/VID_20210625_100510.mp4')
+    cap = cv2.VideoCapture('/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Borboleta-620098100705605/Video Lateral/VID_20210625_100523.mp4')
     while True:
         _, frame = cap.read()
         if frame is None:

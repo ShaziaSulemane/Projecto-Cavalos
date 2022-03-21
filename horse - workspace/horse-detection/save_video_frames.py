@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 
 cap = cv2.VideoCapture(
-    '/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Bacatum 06.07.2021/Videos/Lat Esquerda.mp4')
+    '/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Borboleta-620098100705605/Video Lateral/VID_20210625_100523.mp4')
 background_object = cv2.createBackgroundSubtractorKNN(dist2Threshold=600, detectShadows=True)
 
 kernel = None
@@ -43,7 +43,7 @@ while cap.isOpened():
             foreground_mask = cv2.dilate(foreground_mask, kernel, iterations=2)
             i += 1
 
-        contours, _ = cv2.findContours(foreground_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = cv2.findContours(foreground_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[1]
         frameCopy = frame.copy()
         cnt = max(contours, key=cv2.contourArea)
 
