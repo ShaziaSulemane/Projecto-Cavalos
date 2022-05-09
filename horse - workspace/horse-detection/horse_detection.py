@@ -2,10 +2,19 @@ import math
 
 import cv2
 import pandas as pd
+import scipy.ndimage
 import tensorflow as tf
 from tensorflow import keras
 import os
 import numpy as np
+
+import PIL
+from PIL import Image
+import requests
+from io import BytesIO
+from PIL import ImageFilter
+from PIL import ImageEnhance
+from IPython.display import display
 
 ROOT_DIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -131,7 +140,8 @@ def opticalFlow(prevFrame, nextFrame, rgb, width, height, xmin, xmax, ymin, ymax
     higherDistance = math.sqrt(pow(width, 2) + pow(height, 2))
     # opticalFlowGPU = cv2.cuda_FarnebackOpticalFlow.create(4, 0.5, False, 20, 2, 5, 1.5, 0)
     # flows = opticalFlowGPU.calc(cv2.cuda_GpuMat(prevFrame), cv2.cuda_GpuMat(nextFrame), None).download()
-    flows = cv2.calcOpticalFlowFarneback(prevFrame, nextFrame, flow=None, pyr_scale=0.5, poly_sigma=1.5, levels=4, winsize=20, iterations=2, poly_n=1, flags=0)
+    flows = cv2.calcOpticalFlowFarneback(prevFrame, nextFrame, flow=None, pyr_scale=0.5, poly_sigma=1.5, levels=4,
+                                         winsize=20, iterations=2, poly_n=1, flags=0)
     list_flow = []
     for y in range(0, height, step):
         for x in range(0, width, step):
@@ -147,6 +157,61 @@ def opticalFlow(prevFrame, nextFrame, rgb, width, height, xmin, xmax, ymin, ymax
 
     return list_flow
 
+def getHistogramofGradientsChannels (img, xmin, xmax, ymin, ymax):
+    # crop image
+    # Python gradient calculation
+    # Read image
+    im = cv2.imread('bolt.png')
+    im = np.float32(im) / 255.0
+
+    # Calculate gradient
+    gx = cv2.Sobel(img, cv2.CV_32F, 1, 0, ksize=1)
+    gy = cv2.Sobel(img, cv2.CV_32F, 0, 1, ksize=1)
+
+    mag, angle = cv2.cartToPolar(gx, gy, angleInDegrees=True)
+
+
+def getAverageImageChannels(img):
+    b, g, r = cv2.split(img)  # Split channels
+    # Remove zeros
+    b = b[b != 0]
+    g = g[g != 0]
+    r = r[r != 0]
+
+    b_average = np.average(b)
+    g_average = np.average(g)
+    r_average = np.average(r)
+
+    return r_average, g_average, b_average
+
+
+def getMedianImageChannels(im):
+    b, g, r = cv2.split(im)  # Split channels
+    # Remove zeros
+    b = b[b != 0]
+    g = g[g != 0]
+    r = r[r != 0]
+    # median values
+    b_median = np.median(b)
+    r_median = np.median(r)
+    g_median = np.median(g)
+
+    return r_median, g_median, b_median
+
+
+def getKNN(im, value, xmin, xmax, ymin, ymax):
+    h, w, c = im.shape
+
+    for x in range(w):
+        for y in range(h):
+
+            px = im[y][x]
+            # dist = np.sqrt(np.square(px[0] - median[0]) + np.square(px[1] - median[1]) + np.square(px[2] - median[2]))
+            dist = np.abs(px[0] - value[0]) + np.abs(px[1] - value[1]) + np.abs(px[2] - value[2])
+
+            if dist < 125 or dist > 350 or not ((xmin < x < xmax) and (ymin < y < ymax)):
+                im[y][x] = np.array([0, 0, 0])
+
 
 def main():
     # The file names follow: E - epochs, LR - learning rate, BS - batches, WH - width and the height of resized
@@ -157,7 +222,8 @@ def main():
 
     firstFrame = True
     model = loading_model(ROOT_DIR + '/model/')
-    cap = cv2.VideoCapture('/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Borboleta-620098100705605/Video Lateral/VID_20210625_100523.mp4')
+    cap = cv2.VideoCapture(
+        '/home/shazia/Documents/Projecto Cavalos/HorseID - dataset/Borboleta-620098100705605/Video Lateral/VID_20210625_100523.mp4')
     while True:
         _, frame = cap.read()
         if frame is None:
@@ -176,13 +242,17 @@ def main():
                 imgNextGray = cv2.cvtColor(flow_img, cv2.COLOR_BGR2GRAY)
 
                 for (ymin, xmin, ymax, xmax) in pred_boxes:
-                    list_flow = opticalFlow(imgPrevGray, imgNextGray, flow_img, flow_img.shape[1], flow_img.shape[0], xmin, xmax, ymin, ymax, 1, 5, 1)
-                    # print("Flow: ", str(list_flow))
+                    list_flow = opticalFlow(imgPrevGray, imgNextGray, flow_img, flow_img.shape[1], flow_img.shape[0],
+                                            xmin, xmax, ymin, ymax, 1, 5, 1)
 
                 imgPrevGray = imgNextGray.copy()
 
-        stacked = np.hstack((frame, flow_img))
-        cv2.imshow('Frame', cv2.resize(stacked, None, fx=0.5, fy=0.5))
+                r_median, g_median, b_median = getMedianImageChannels(flow_img)
+                getKNN(img, [b_median, g_median, r_median], xmin, xmax, ymin, ymax)
+                print(r_median, g_median, b_median)
+
+        # stacked = np.hstack((frame, img))
+        cv2.imshow('Frame', cv2.resize(img, None, fx=0.75, fy=0.75))
         cv2.waitKey(1)
 
 
