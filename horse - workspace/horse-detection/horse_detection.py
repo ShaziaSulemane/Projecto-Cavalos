@@ -146,13 +146,13 @@ def opticalFlow(prevFrame, nextFrame, rgb, width, height, xmin, xmax, ymin, ymax
     list_flow = []
     for y in range(0, height, step):
         for x in range(0, width, step):
-            if not ((xmin < x < xmax) and (ymin < y < ymax)):
-                flow = flows[y, x] * flowLength
-                distance = math.sqrt(pow(flow[0], 2) + pow(flow[1], 2))
-                distance = 100.0 * distance / higherDistance
-                if distance > flowThreshold:
-                    list_flow.append([x, y])
-                    # cv2.arrowedLine(rgb, (x, y), (int(x + flow[0]), int(y + flow[1])), color=(0, 0, 255), thickness=2)
+
+            flow = flows[y, x] * flowLength
+            distance = math.sqrt(pow(flow[0], 2) + pow(flow[1], 2))
+            distance = 100.0 * distance / higherDistance
+            if distance > flowThreshold and ((xmin < x < xmax) and (ymin < y < ymax)):
+                list_flow.append([x, y])
+                # cv2.arrowedLine(rgb, (x, y), (int(x + flow[0]), int(y + flow[1])), color=(0, 0, 255), thickness=2)
             else:
                 rgb[y][x] = np.array([0, 0, 0])
 
@@ -213,7 +213,13 @@ def getHistogramofGradientsChannels(im):
     plt.show()
 
 
-# todo getAverageImageCoordinates
+# todo getAverageImageCoordinates test
+def getAverageImageCoordinates (list_flow):
+    array_flow = np.array(list_flow)
+    averaged = np.average(array_flow, axis=0)
+    return averaged
+
+
 def getAverageImageChannels(img):
     b, g, r = cv2.split(img)  # Split channels
     # Remove zeros
@@ -228,7 +234,13 @@ def getAverageImageChannels(img):
     return r_average, g_average, b_average
 
 
-# todo getMedianImageCoordinates
+# todo getMedianImageCoordinates test
+def getMedianImageCoordinates (list_flow):
+    array_flow = np.array(list_flow)
+    median = np.median(array_flow, axis=0)
+    return median
+
+
 def getMedianImageChannels(im):
     b, g, r = cv2.split(im)  # Split channels
     # Remove zeros
@@ -250,6 +262,17 @@ def getMedianImageChannelsGrayscale(im):
 
     return g_median
 
+
+def getKNNCoordinates(img, value, xmin, xmax, ymin, ymax):
+    h, w, c = img.shape
+
+    for x in range(w):
+        for y in range(h):
+
+            dist = np.abs(x - value[0]) + np.abs(y - value[y])
+
+            if dist < 20 or dist > 35 or not ((xmin < x < xmax) and (ymin < y < ymax)):
+                img[y][x] = np.array(0)
 
 def getKNNGrayscale(im, value, xmin, xmax, ymin, ymax):
     h, w = im.shape
@@ -273,10 +296,10 @@ def getKNN(im, value, xmin, xmax, ymin, ymax):
 
             px = im[y][x]
             # dist = np.sqrt(np.square(px[0] - median[0]) + np.square(px[1] - median[1]) + np.square(px[2] - median[2]))
-            dist = ((np.abs(px[0] - value[0]) + np.abs(px[1] - value[1]) + np.abs(px[2] - value[2])) / 765) * 100
+            dist = ((np.abs(px[0] - value[0]) + np.abs(px[1] - value[1]) + np.abs(px[2] - value[2]))/765)*100
             # print("dist: " + str(dist))
 
-            if dist < 10 or dist > 30 or not ((xmin < x < xmax) and (ymin < y < ymax)):
+            if dist < 16 or dist > 46 or not ((xmin < x < xmax) and (ymin < y < ymax)):
                 im[y][x] = np.array([0, 0, 0])
 
 
@@ -333,15 +356,19 @@ def main():
 
                 for (ymin, xmin, ymax, xmax) in pred_boxes:
                     list_flow = opticalFlow(imgPrevGray, imgNextGray, flow_img, flow_img.shape[1], flow_img.shape[0],
-                                            xmin, xmax, ymin, ymax, 1, 5, 1)
+                                            xmin, xmax, ymin, ymax, 10, 5, 1)
 
                 imgPrevGray = imgNextGray.copy()
+
+                # cv2.imshow('Flow', cv2.resize(flow_img, None, fx=0.75, fy=0.75))
 
                 r_median, g_median, b_median = getMedianImageChannels(flow_img)
                 getKNN(img, [b_median, g_median, r_median], xmin, xmax, ymin, ymax)
                 print(r_median, g_median, b_median)
 
-        stacked = np.hstack((frame, img))
+                # todo region growing based on HSL or HSV
+
+        # stacked = np.hstack((frame, img))
         cv2.imshow('Frame', cv2.resize(img, None, fx=0.75, fy=0.75))
         cv2.waitKey(1)
 
