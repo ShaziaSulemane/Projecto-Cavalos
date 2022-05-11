@@ -362,13 +362,17 @@ def main():
                 imgPrevGray = imgNextGray.copy()
 
                 # cv2.imshow('Flow', cv2.resize(flow_img, None, fx=0.75, fy=0.75))
-                getHistogramofGradientsChannels(img, xmin, xmax, ymin, ymax)
-                # r_median, g_median, b_median = getMedianImageChannels(flow_img)
-                # getKNN(img, [b_median, g_median, r_median], xmin, xmax, ymin, ymax)
-                # print(r_median, g_median, b_median)
+                # histogram seems to be bad for horizontal lines
+                # getHistogramofGradientsChannels(img, xmin, xmax, ymin, ymax)
+                r_median, g_median, b_median = getMedianImageChannels(flow_img)
+                getKNN(img, [b_median, g_median, r_median], xmin, xmax, ymin, ymax)
+                print(r_median, g_median, b_median)
 
                 # todo region growing based on HSL or HSV
-
+                # todo region growing based on median image or flow_img with seed being the different points
+                # todo enhance edges
+                # todo organise code into different classes
+                # todo create log class or a way to write logs
 
         # stacked = np.hstack((frame, img))
         cv2.imshow('Frame', cv2.resize(img, None, fx=0.75, fy=0.75))
