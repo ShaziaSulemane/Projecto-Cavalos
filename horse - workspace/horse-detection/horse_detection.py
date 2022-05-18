@@ -93,7 +93,7 @@ def horse_detection(image, model):
     boxes, scores, classes, num_detections = new_model(rgb_tensor)
 
     # Loading csv with labels of classes
-    labels = pd.read_csv('coco-labels-paper.txt', header=None)
+    labels = pd.read_csv('coco/coco-labels-paper.txt', header=None)
     # labels = labels['OBJECT (2017 REL.)']
     labels = labels.to_numpy()[:, 0]
 
@@ -270,7 +270,7 @@ def getKNNCoordinates(img, value, xmin, xmax, ymin, ymax):
     for x in range(w):
         for y in range(h):
 
-            dist = np.abs(x - value[0]) + np.abs(y - value[y])
+            dist = np.abs(x - value[0]) + np.abs(y - value[1])
 
             if dist < 20 or dist > 35 or not ((xmin < x < xmax) and (ymin < y < ymax)):
                 img[y][x] = np.array(0)
@@ -363,10 +363,16 @@ def main():
 
                 # cv2.imshow('Flow', cv2.resize(flow_img, None, fx=0.75, fy=0.75))
                 # histogram seems to be bad for horizontal lines
-                # getHistogramofGradientsChannels(img, xmin, xmax, ymin, ymax)
-                r_median, g_median, b_median = getMedianImageChannels(flow_img)
-                getKNN(img, [b_median, g_median, r_median], xmin, xmax, ymin, ymax)
-                print(r_median, g_median, b_median)
+                getHistogramofGradientsChannels(img, xmin, xmax, ymin, ymax)
+                # r_median, g_median, b_median = getMedianImageChannels(flow_img)
+                # getKNN(img, [b_median, g_median, r_median], xmin, xmax, ymin, ymax)
+                # print(r_median, g_median, b_median)
+
+                # todo coco dataset, segmentação semantica: https://divamgupta.com/image-segmentation/2019/06/06/deep-learning-semantic-segmentation-keras.html
+                # todo estudar algoritmos de segmentação semantica
+                # todo procurar codigos/implementações e datasets
+                # todo conferencia cvpr
+
 
                 # todo region growing based on HSL or HSV
                 # todo region growing based on median image or flow_img with seed being the different points
